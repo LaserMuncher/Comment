@@ -17,7 +17,8 @@ def comment_post(request, post_id):
             new_comment.post = post
             new_comment.user = request.user
             new_comment.save()
-            return redirect('post_detail', post_id=post_id)
+            username = post.user.username
+            return redirect('post_detail', username=username, post_id=post_id)
     else:
         comment_form = CommentForm()
 
