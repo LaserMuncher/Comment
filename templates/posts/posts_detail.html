@@ -1,0 +1,168 @@
+{% extends "profile/header.html" %}
+{% load static %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card rounded" style="width: 60rem; max-height: none;">
+        <div class="card-header d-flex justify-content-between">
+            <a href="{% url 'profile' username=post.user.username %}">
+                <div class="d-flex align-items-center">
+                    <img class="img-xs rounded-circle" src="{{ post.user.profile.picture.url }}" alt="">
+                    <div class="ml-2">
+                        <p>{{ post.user.username }}</p>
+                        <p class="tx-11 text-muted">{{ post.createdAt }}</p>
+                    </div>
+                </div>
+            </a>
+            {% if user == post.user %} {# Check if logged-in user is the profile user
+            <button type="button" class="btn-sm btn-outline-secondary ellipsis-button" data-toggle="modal" data-target="#deletePostModal">
+                <i class="far fa-ellipsis-v"></i>
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="card-body" style="max-height: none;">
+            <p class="mb-3 tx-14">{{ post.content }}</p>
+
+            {% if post.post_type == "picture" and post.picture %}
+                <img class="img-fluid" src="{{ post.picture.url }}" alt="">
+            {% elif post.post_type == "video" and post.video %}
+                <video controls>
+                    <source src="{{ post.video.url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {% else %}
+
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <div class="d-flex post-actions">
+                    <form method="post" class="like-form" data-like-url="{% url 'like' post.user.username post.id %}">
+                        {% csrf_token %}
+                        <button onclick="changeIcon(this)" type="button" id="like" class="bg-green-500 text-white px-2 py-1 rounded-full flex items-center like-button-post">
+                            {% if post == foo.post %}
+                                {% if foo.is_liked %}
+                                    <i class="fa-solid fa-heart" id="like"></i>
+                                {% else %}
+                                    <i class="fa-regular fa-heart" id="like"></i>
+                                {% endif %}
+                            {% endif %}
+                        </button>
+                        <span class="ml-2 text-sm" id="likes-count">{{ post.likes }} </span>
+                        <a href="{% url 'likedby' username=post.user.username post_id=post.id %}">
+                            Likes
+                        </a>
+                    </form>
+                </div>
+                <div class="d-flex post-actions">
+                    <a href="javascript:;" class="d-flex align-items-center text-muted" style="text-decoration: none">
+                        <!-- Comment button with icon -->
+                        <i class="far fa-comment"></i> Comment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display existing comments -->
+    <div class="card mb-4" style="width: 60rem; max-height: none;">
+        <div class="card-body">
+
+        {% for comment in comments %}
+            <div class="media mb-3">
+                <img src="{{ comment.user.profile.picture.url }}" class="mr-3 rounded-circle" alt="{{ comment.user.username }}" style="width: 50px; height: 50px;">
+                <div class="media-body">
+                    <h5 class="mt-0">{{ comment.user.username }}</h5>
+                    <p>{{ comment.content }}</p>
+                </div>
+            </div>
+        {% endfor %}
+
+        </div>
+    </div>
+
+    <!-- Comment Form -->
+    <div class="card mb-4" style="width: 60rem; max-height: none;">
+        <div class="card-body">
+            <form method="post" id="comment-form" action="{% url 'comment_post' post.id %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ comment_form.content.label_tag }}
+                    <label for="{{ comment_form.content.id_for_label }}"></label>
+                    <textarea class="form-control" name="{{ comment_form.content.name }}" id="{{ comment_form.content.id_for_label }}" rows="4">{{ comment_form.content.value }}</textarea>
+                    <small class="form-text text-muted">{{ comment_form.content.help_text }}</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Comment</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% if user == post.user %} {# Check if logged-in user is the profile user #}
+<div class="modal fade" id="deletePostModal" tabindex="-1" role="dialog" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePostModalLabel">Delete Post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this post?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <form method="post" action="{% url 'delete_post' username=post.user.username post_id=post.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<style>
+
+    likes-list {
+        list-style: none;
+        padding: 0;
+    }
+</style>
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $(".like-button-post").click(function () {
+            const likeForm = $(this).closest(".like-form");
+
+            $.ajax({
+                type: "POST",
+                url: likeForm.data("like-url"),
+                data: likeForm.serialize(),
+                success: function (data) {
+                    const likeCount = likeForm.find(".text-sm");
+                    likeCount.text(data.likes + " ");
+                },
+                error: function (error) {
+                    console.error("Error: " + JSON.stringify(error));
+                }
+            });
+        });
+    });
+
+    function changeIcon(button) {
+        const icon = button.querySelector("i");
+        if (icon.classList.contains("fa-solid")) {
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+        } else {
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

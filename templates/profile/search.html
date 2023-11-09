@@ -1,0 +1,49 @@
+{% extends "profile/header.html" %}
+{% load static %}
+{% block content %}
+<div class="profile-page tx-13">
+    {% if users|length > 0 %}
+            <section class="projectsList">
+                <div class="grid grid--three">
+                    {% for user in users %}
+                        <div class="container">
+                            <div class="row">
+
+        <div class="col-12 grid-margin">
+            <div class="profile-header"  id="user-cover">
+                <div class="cover">
+                    <div class="gray-shade"></div>
+                    <figure>
+                        <img src="https://staticg.sportskeeda.com/editor/2022/10/6298c-16668805486397-1920.jpg?w=840 class="img-fluid" alt="profile cover">
+                    </figure>
+
+                    <div class="cover-body d-flex justify-content-between align-items-center">
+                        <div>
+
+                            <a id="logo" href="{% url 'profile' user.username%}">
+                                <img class="profile-pic" src="{% static 'profile/profile.png' %}" alt="profile">
+                            </a>
+
+
+                            <a id="user-search" href="{% url 'profile' user.username%}">{{user.username}}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-links">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                    {% endfor %}
+                </div>
+            </section>
+    {% else  %}
+    <h3> </h3>
+    {% endif %}
+</div>
+{% endblock %}
+
